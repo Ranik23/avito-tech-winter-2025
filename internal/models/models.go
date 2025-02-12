@@ -3,7 +3,7 @@ package models
 import "time"
 
 type User struct {
-	ID           	uint      `gorm:"primaryKey"`
+	ID           	uint      `gorm:"primaryKey;autoIncrement"`
 	Username     	string    `gorm:"column:username;unique;not null"`
 	HashedPassword	[]byte	  `gorm:"column:hashedPassword;not null"`
 	Token			string	  `gorm:"column:token;not null"`
@@ -12,13 +12,13 @@ type User struct {
 }
 
 type Merch struct {
-	ID    uint   `gorm:"primaryKey"`
+	ID    uint   `gorm:"primaryKey;autoIncrement"`
 	Name  string `gorm:"column:name;unique;not null"`
 	Price int    `gorm:"column:price;not null"`
 }
 
 type Transaction struct {
-	ID         uint      `gorm:"primaryKey"`
+	ID         uint      `gorm:"primaryKey;autoIncrement"`
 	SenderID   uint      `gorm:"column:sender_id;index"`
 	Sender     User      `gorm:"foreignKey:SenderID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 	ReceiverID uint      `gorm:"column:receiver_id;index"`
@@ -28,7 +28,7 @@ type Transaction struct {
 }
 
 type Purchase struct {
-	ID        uint      `gorm:"primaryKey"`
+	ID        uint      `gorm:"primaryKey;autoIncrement"`
 	UserID    uint      `gorm:"column:user_id;index"`
 	User      User      `gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 	MerchID   uint      `gorm:"column:merch_id;index"`

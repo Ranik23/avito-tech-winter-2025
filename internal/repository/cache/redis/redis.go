@@ -2,6 +2,4 @@ package redis
 
 
 
-type Cache interface {
-	
-}
+type Redis struct {}

@@ -44,16 +44,6 @@ func (t *TransactionServiceImpl) SendCoins(ctx context.Context, fromUser string,
 		t.logger.Error("faield to create the transaction", slog.String("error", err.Error()))
 		return err
 	}
-
-	if err := t.storage.UpdateAmount(ctx, fromUser, -amount); err != nil {
-		t.logger.Error("failed to update the amount", slog.String("error", err.Error()))
-		return err
-	}
-
-	if err := t.storage.UpdateAmount(ctx, toUser, amount); err != nil {
-		t.logger.Error("failed to update the amount", slog.String("error", err.Error()))
-		return err
-	}
 	return nil
 }
 

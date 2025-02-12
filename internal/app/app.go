@@ -2,9 +2,14 @@ package app
 
 import (
 	"avito/config"
-	"avito/internal/logger"
-	"avito/internal/router/handlers"
 	"avito/internal/controller"
+	"avito/internal/logger"
+	// "avito/internal/repository/db"
+	// "avito/internal/repository/db/postgres"
+	"avito/internal/router/handlers"
+	"avito/internal/service/auth"
+	"avito/internal/service/purchase"
+	"avito/internal/service/transaction"
 	"context"
 	"io"
 	"log/slog"
@@ -19,10 +24,9 @@ import (
 )
 
 type App struct {
-	UserService controller.Controller
-	Server  	*http.Server
-	Logger  	*logger.Logger
-	Context 	context.Context
+	userService *controller.Controller
+	server  	*http.Server
+	logger  	*logger.Logger
 }
 
 func NewApp(configPath string) (*App, error) {
@@ -43,8 +47,19 @@ func NewApp(configPath string) (*App, error) {
 		return nil, err
 	}
 
-	router := gin.Default()
+	logger := logger.SetUpLogger(cfg.LogConfig.Level)
 
+	//storage := postgres.NewRepositoryImpl()
+
+	authService := auth.NewAuthServiceImpl(nil, nil, logger)
+	transactionService := transaction.NewTransactionServiceImpl(nil, nil, logger)
+	purchaseService := purchase.NewPurchaseServiceImpl(nil, nil, logger)
+
+
+	controller := controller.NewController(authService, transactionService, purchaseService)
+
+	router := gin.Default()
+	
 	routes := router.Group("/api")
 	{
 		routes.GET("/info", handlers.InfoHandler(nil))
@@ -59,7 +74,8 @@ func NewApp(configPath string) (*App, error) {
 	}
 
 	return &App{
-		Server: srv,
+		server: srv,
+		userService: controller,
 	}, nil
 }
 
@@ -68,8 +84,8 @@ func (a *App) Run() error {
 	errorCh := make(chan error)
 
 	go func() {
-		if err := a.Server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			a.Logger.Error("Failed to start the server", slog.String("error", err.Error()))
+		if err := a.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			a.logger.Error("Failed to start the server", slog.String("error", err.Error()))
 			errorCh <- err
 		}
 	}()
@@ -83,16 +99,16 @@ func (a *App) Run() error {
 		defer shutdownRelease()
 
 		if err := a.ShutDown(contextShutDown); err != nil {
-			a.Logger.Error("Failed to shutdown the server", slog.String("err", err.Error()))
+			a.logger.Error("Failed to shutdown the server", slog.String("err", err.Error()))
 			return err
 		}
 
 		select {
 		case <-contextShutDown.Done():
-			a.Logger.Info("Server shutdown complete")
+			a.logger.Info("Server shutdown complete")
 		}
 	case err := <-errorCh:
-		a.Logger.Error("Server encountered an error", slog.String("error", err.Error()))
+		a.logger.Error("Server encountered an error", slog.String("error", err.Error()))
 		return err
 	}
 
@@ -101,13 +117,13 @@ func (a *App) Run() error {
 
 func (a *App) ShutDown(ctx context.Context) error {
 
-	a.Logger.Info("Shutting Down the server")
+	a.logger.Info("Shutting Down the server")
 
-	if err := a.Server.Shutdown(ctx); err != nil {
-		a.Logger.Error("Failed to shutdown the server", slog.String("error", err.Error()))
+	if err := a.server.Shutdown(ctx); err != nil {
+		a.logger.Error("Failed to shutdown the server", slog.String("error", err.Error()))
 		return err
 	}
 
-	a.Logger.Info("Server shutdown successfully")
+	a.logger.Info("Server shutdown successfully")
 	return nil
 }

@@ -38,28 +38,7 @@ func (p *PurchaseServiceImpl) GetMerch(ctx context.Context) ([]models.Merch, err
 }
 
 func (p *PurchaseServiceImpl) Buy(ctx context.Context, purchaserName string, itemName string) error {
-	merch, err := p.storage.FindMerch(ctx)
-	if err != nil {
-		p.logger.Error("failed to get the merch", slog.String("error", err.Error()))
-		return err
-	}
-
-	var merchItem models.Merch
-
-	for _, m := range merch {
-		if m.Name == itemName {
-			merchItem = m
-		}
-	}
-
-	price := merchItem.Price
-
-	if err := p.storage.UpdateAmount(ctx, purchaserName, -price); err != nil {
-		p.logger.Error("failed to updated the amount", slog.String("error", err.Error()))
-		return err
-	}
-
-	if err := p.storage.CreatePurchase(ctx, purchaserName, itemName, price); err != nil {
+	if err := p.storage.CreatePurchase(ctx, purchaserName, itemName); err != nil {
 		p.logger.Error("failed to create the purchase", slog.String("error", err.Error()))
 		return err
 	}

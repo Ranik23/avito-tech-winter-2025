@@ -20,6 +20,22 @@ func NewLogger(level slog.Level) *Logger {
 		}))}
 }
 
+
+func SetUpLogger(level string) *Logger {
+	var lvl slog.Level
+	switch level {
+	case "info":
+		lvl = slog.LevelInfo
+	case "warn":
+		lvl = slog.LevelWarn
+	case "error":
+		lvl = slog.LevelError
+	case "debug":
+		lvl = slog.LevelDebug
+	}
+	return NewLogger(lvl)
+}
+
 func (l *Logger) InfoWithAttrs(ctx context.Context, level slog.Level, message string, attrs ...slog.Attr) {
 	l.Logger.LogAttrs(ctx, level, message, attrs...)
 }

@@ -44,6 +44,7 @@ type Config struct {
 	HTTPServerConfig	    `yaml:"httpServerConfig"`
 	PostgresConfig 			`yaml:"postgresConfig"`
 	RedisConfig	   			`yaml:"redisConfig"`
+	LogConfig				`yaml:"logConfig"`
 }
 
 
@@ -64,6 +65,10 @@ type RedisConfig struct {
 	Host		string		`yaml:"host"`
 	Port		string		`yaml:"port"`
 	Password	string		`yaml:"password"`
+}
+
+type LogConfig struct {
+	Level string			`yaml:"level"`
 }
 
 type JWTConfig struct {
