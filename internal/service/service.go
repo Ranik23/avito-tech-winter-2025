@@ -69,7 +69,13 @@ func (u *UserServiceImpl) Authenticate(ctx context.Context, userName string, pas
 		return token, nil
 	}
 
-	if err := bcrypt.CompareHashAndPassword(user.HashedPassword, []byte(password)); err != nil {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		u.logger.Error("failed to hash the password", slog.String("error", err.Error()))
+		return "", err
+	}
+
+	if err := bcrypt.CompareHashAndPassword(user.HashedPassword, hashedPassword); err != nil {
 		u.logger.Error("invalid password", slog.String("error", err.Error()))
 		return "", errors.New("invalid credentials")
 	}
