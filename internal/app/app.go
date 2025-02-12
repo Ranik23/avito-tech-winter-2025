@@ -4,7 +4,7 @@ import (
 	"avito/config"
 	"avito/internal/logger"
 	"avito/internal/router/handlers"
-	"avito/internal/service"
+	"avito/internal/controller"
 	"context"
 	"io"
 	"log/slog"
@@ -19,7 +19,7 @@ import (
 )
 
 type App struct {
-	UserService service.UserService
+	UserService controller.Controller
 	Server  	*http.Server
 	Logger  	*logger.Logger
 	Context 	context.Context

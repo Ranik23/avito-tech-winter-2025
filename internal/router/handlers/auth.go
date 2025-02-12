@@ -1,9 +1,9 @@
 package handlers
 
 import (
+	"avito/internal/controller"
 	"avito/internal/router/handlers/requests"
 	"avito/internal/router/handlers/responses"
-	"avito/internal/service"
 	"context"
 	"net/http"
 	"time"
@@ -11,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func AuthHandler(userOperator service.UserService) gin.HandlerFunc {
+func AuthHandler(userOperator *controller.Controller) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req requests.AuthRequest
 

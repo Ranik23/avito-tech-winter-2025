@@ -4,6 +4,8 @@ import (
 	"io"
 	"log"
 	"os"
+	"time"
+
 	"gopkg.in/yaml.v2"
 )
 
@@ -58,10 +60,12 @@ type PostgresConfig struct {
 	DBname 		string		`yaml:"dbname"`
 }
 
-
 type RedisConfig struct {
 	Host		string		`yaml:"host"`
 	Port		string		`yaml:"port"`
 	Password	string		`yaml:"password"`
+}
 
+type JWTConfig struct {
+	Duration 			time.Time 	`yaml:"duration"`
 }

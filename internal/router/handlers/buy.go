@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"avito/internal/apperror"
+	"avito/internal/controller"
 	"avito/internal/router/handlers/responses"
-	"avito/internal/service"
 	"context"
 	"errors"
 	"net/http"
@@ -12,17 +12,26 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func BuyHandler(userOperator service.UserService) gin.HandlerFunc {
+func BuyHandler(userOperator *controller.Controller) gin.HandlerFunc {
 	return func(c *gin.Context) {
-
-		_ = c.GetHeader("Authorization")
+		tokenString := c.GetHeader("Authorization")
 
 		itemName := c.Param("item")
 
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
-		if err := userOperator.BuyItem(ctx, itemName); err != nil {
+		user, err := userOperator.VerifyToken(ctx, tokenString)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, responses.ErrorResponse{
+				Errors: err.Error(),
+			})
+			return
+		}
+
+		purchaserName := user.Username
+
+		if err := userOperator.Buy(ctx, purchaserName, itemName); err != nil {
 			statusCode := http.StatusInternalServerError
 
 			if errors.Is(err, apperror.ErrItemNotFound) {

@@ -1,9 +1,9 @@
 package handlers
 
 import (
+	"avito/internal/controller"
 	"avito/internal/router/handlers/requests"
 	"avito/internal/router/handlers/responses"
-	"avito/internal/service"
 	"context"
 	"net/http"
 	"time"
@@ -11,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func SendCoinHandler(userOperator service.UserService) gin.HandlerFunc {
+func SendCoinHandler(userOperator *controller.Controller) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req requests.SendCoinRequest
 
@@ -20,11 +20,22 @@ func SendCoinHandler(userOperator service.UserService) gin.HandlerFunc {
 			return
 		}
 
+		tokenString := c.GetHeader("Authorization")
+
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
-		err := userOperator.SendCoins(ctx, req.ToUser, req.Amount)
+		user, err := userOperator.VerifyToken(ctx, tokenString)
 		if err != nil {
+			c.JSON(http.StatusInternalServerError, responses.ErrorResponse{
+				Errors: err.Error(),
+			})
+			return
+		}
+
+		userName := user.Username
+
+		if err := userOperator.SendCoins(ctx, userName, req.ToUser, req.Amount); err != nil {
 			c.JSON(http.StatusInternalServerError, responses.ErrorResponse{Errors: err.Error()})
 			return
 		}
