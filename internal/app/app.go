@@ -3,6 +3,7 @@ package app
 import (
 	"avito/config"
 	"avito/internal/logger"
+	"avito/internal/router/handlers"
 	"avito/internal/usecase"
 	"context"
 	"io"
@@ -44,7 +45,15 @@ func NewApp(configPath string) (*App, error) {
 	}
 
 	router := gin.Default()
-	
+
+	routes := router.Group("/api")
+	{
+		routes.GET("/info", handlers.InfoHandler(nil))
+		routes.POST("/sendCoin", handlers.SendCoinHandler(nil))
+		routes.GET("/buy/{item}", handlers.BuyHandler(nil))
+		routes.POST("/auth", handlers.AuthHandler(nil))
+	}
+
 	srv := &http.Server{
 		Addr: cfg.HTTPServerConfig.Host + cfg.HTTPServerConfig.Port,
 		Handler: router,
