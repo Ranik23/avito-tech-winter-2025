@@ -4,7 +4,9 @@ import (
 	"avito/internal/router/handlers/requests"
 	"avito/internal/router/handlers/responses"
 	"avito/internal/usecase"
+	"context"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -15,15 +17,19 @@ func AuthHandler(userOperator usecase.UserCase) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req requests.AuthRequest
 
-		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusInternalServerError, responses.ErrorResponse{
-				Errors: err.Error(),
-			})
-			return
-		}
+        if err := c.ShouldBindJSON(&req); err != nil {
+            c.JSON(http.StatusInternalServerError, responses.ErrorResponse{
+                Errors: err.Error(),
+            })
+            return
+        }
 
+        userName, password := req.UserName, req.Password
 
-		token, err := userOperator.Authenticate(req.UserName, req.Password)
+		ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+		defer cancel()
+		
+		token, err := userOperator.Authenticate(ctx, userName, password)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, responses.ErrorResponse{
 				Errors: err.Error(),

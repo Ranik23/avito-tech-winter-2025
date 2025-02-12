@@ -4,7 +4,9 @@ import (
 	"avito/internal/router/handlers/requests"
 	"avito/internal/router/handlers/responses"
 	"avito/internal/usecase"
+	"context"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -20,7 +22,10 @@ func SendCoinHandler(userOperator usecase.UserCase) gin.HandlerFunc {
 			return
 		}
 
-		err := userOperator.SendCoins(req.ToUser, req.Amount)
+		ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+		defer cancel()
+
+		err := userOperator.SendCoins(ctx, req.ToUser, req.Amount)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, responses.ErrorResponse{Errors: err.Error()})
 			return

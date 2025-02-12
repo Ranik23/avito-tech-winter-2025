@@ -4,8 +4,10 @@ import (
 	"avito/internal/apperror"
 	"avito/internal/router/handlers/responses"
 	"avito/internal/usecase"
+	"context"
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -13,9 +15,18 @@ import (
 
 func BuyHandler(userOperator usecase.UserCase) gin.HandlerFunc {
 	return func(c *gin.Context) {
+
+		tokenString := c.GetHeader("Authorization")
+		
+
+
+
 		itemName := c.Param("item")
 
-		if err := userOperator.BuyItem(itemName); err != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+		defer cancel()
+
+		if err := userOperator.BuyItem(ctx, itemName); err != nil {
 			statusCode := http.StatusInternalServerError
 
 			if errors.Is(err, apperror.ErrItemNotFound) {

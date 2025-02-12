@@ -9,5 +9,6 @@ import (
 func InfoHandler(userOperator usecase.UserCase) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		
+		
 	}
 }
