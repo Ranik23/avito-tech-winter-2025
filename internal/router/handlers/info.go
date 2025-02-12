@@ -1,14 +1,12 @@
 package handlers
 
 import (
-	"avito/internal/usecase"
-
+	"avito/internal/service"
 	"github.com/gin-gonic/gin"
 )
 
-func InfoHandler(userOperator usecase.UserCase) gin.HandlerFunc {
+func InfoHandler(userOperator service.UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		
-		
+
 	}
 }

@@ -3,10 +3,12 @@ package models
 import "time"
 
 type User struct {
-	ID           uint      `gorm:"primaryKey"`
-	Username     string    `gorm:"column:username;unique;not null"`
-	RegisteredAt time.Time `gorm:"column:registered_at;autoCreateTime"`
-	Balance      int       `gorm:"column:balance;not null;default:1000"`
+	ID           	uint      `gorm:"primaryKey"`
+	Username     	string    `gorm:"column:username;unique;not null"`
+	HashedPassword	[]byte	  `gorm:"column:hashedPassword;not null"`
+	Token			string	  `gorm:"column:token;not null"`
+	RegisteredAt 	time.Time `gorm:"column:registered_at;autoCreateTime"`
+	Balance      	int       `gorm:"column:balance;not null;default:1000"`
 }
 
 type Merch struct {

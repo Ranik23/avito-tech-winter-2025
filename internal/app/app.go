@@ -4,7 +4,7 @@ import (
 	"avito/config"
 	"avito/internal/logger"
 	"avito/internal/router/handlers"
-	"avito/internal/usecase"
+	"avito/internal/service"
 	"context"
 	"io"
 	"log/slog"
@@ -18,11 +18,10 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-
 type App struct {
-	UseCase 	usecase.UserCase
-	Server 		*http.Server
-	Logger 		*logger.Logger
+	UserService service.UserService
+	Server  	*http.Server
+	Logger  	*logger.Logger
 	Context 	context.Context
 }
 
@@ -55,7 +54,7 @@ func NewApp(configPath string) (*App, error) {
 	}
 
 	srv := &http.Server{
-		Addr: cfg.HTTPServerConfig.Host + cfg.HTTPServerConfig.Port,
+		Addr:    cfg.HTTPServerConfig.Host + cfg.HTTPServerConfig.Port,
 		Handler: router,
 	}
 
@@ -99,8 +98,6 @@ func (a *App) Run() error {
 
 	return nil
 }
-
-
 
 func (a *App) ShutDown(ctx context.Context) error {
 

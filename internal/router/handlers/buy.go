@@ -3,7 +3,7 @@ package handlers
 import (
 	"avito/internal/apperror"
 	"avito/internal/router/handlers/responses"
-	"avito/internal/usecase"
+	"avito/internal/service"
 	"context"
 	"errors"
 	"net/http"
@@ -12,18 +12,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-
-func BuyHandler(userOperator usecase.UserCase) gin.HandlerFunc {
+func BuyHandler(userOperator service.UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
-		tokenString := c.GetHeader("Authorization")
-		
-
-
+		_ = c.GetHeader("Authorization")
 
 		itemName := c.Param("item")
 
-		ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
 		if err := userOperator.BuyItem(ctx, itemName); err != nil {
@@ -39,6 +35,6 @@ func BuyHandler(userOperator usecase.UserCase) gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"message": "Успешный ответ"})	
+		c.JSON(http.StatusOK, gin.H{"message": "Успешный ответ"})
 	}
 }
