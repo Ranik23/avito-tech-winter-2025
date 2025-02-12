@@ -1,6 +1,8 @@
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
-    username TEXT UNIQUE NOT NULL,
+    username VARCHAR(255) UNIQUE NOT NULL,
+    hashedPassword BYTEA NOT NULL,
+    token VARCHAR(255) NOT NULL,
     registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     balance INT NOT NULL DEFAULT 1000
 );

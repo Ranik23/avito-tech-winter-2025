@@ -10,8 +10,10 @@ import (
 	"errors"
 	"log/slog"
 	"time"
+
 	"github.com/golang-jwt/jwt"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 
@@ -50,7 +52,7 @@ func generateJWT(userName string) (string, error) {
 
 func (a *AuthServiceImpl) Authenticate(ctx context.Context, userName string, password string) (string, error) {
 	user, err := a.storage.FindUserByName(ctx, userName)
-	if err != nil {
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound){
 		a.logger.Error("internal server error", slog.String("error", err.Error()))
 		return "", err
 	}

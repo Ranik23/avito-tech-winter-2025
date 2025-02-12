@@ -2,8 +2,9 @@ package app
 
 import (
 	"avito/config"
-	"avito/internal/controller"
 	"avito/internal/logger"
+	"avito/internal/repository/db/postgres"
+
 	// "avito/internal/repository/db"
 	// "avito/internal/repository/db/postgres"
 	"avito/internal/router/handlers"
@@ -24,7 +25,9 @@ import (
 )
 
 type App struct {
-	userService *controller.Controller
+	authService  		auth.AuthService
+	purchaseService 	purchase.PurchaseService
+	transactionService 	transaction.TransactionService
 	server  	*http.Server
 	logger  	*logger.Logger
 }
@@ -49,14 +52,16 @@ func NewApp(configPath string) (*App, error) {
 
 	logger := logger.SetUpLogger(cfg.LogConfig.Level)
 
-	//storage := postgres.NewRepositoryImpl()
+	dsn := config.CreatePostgresDSN(cfg)
 
-	authService := auth.NewAuthServiceImpl(nil, nil, logger)
-	transactionService := transaction.NewTransactionServiceImpl(nil, nil, logger)
-	purchaseService := purchase.NewPurchaseServiceImpl(nil, nil, logger)
+	storage, err := postgres.NewRepositoryImpl(dsn, logger)
+	if err != nil {
+		return nil, err
+	}
 
-
-	controller := controller.NewController(authService, transactionService, purchaseService)
+	authService := auth.NewAuthServiceImpl(storage, nil, logger)
+	transactionService := transaction.NewTransactionServiceImpl(storage, nil, logger)
+	purchaseService := purchase.NewPurchaseServiceImpl(storage, nil, logger)
 
 	router := gin.Default()
 	
@@ -65,17 +70,20 @@ func NewApp(configPath string) (*App, error) {
 		routes.GET("/info", handlers.InfoHandler(nil))
 		routes.POST("/sendCoin", handlers.SendCoinHandler(nil))
 		routes.GET("/buy/{item}", handlers.BuyHandler(nil))
-		routes.POST("/auth", handlers.AuthHandler(nil))
+		routes.POST("/auth", handlers.AuthHandler(authService))
 	}
 
 	srv := &http.Server{
-		Addr:    cfg.HTTPServerConfig.Host + cfg.HTTPServerConfig.Port,
+		Addr:    cfg.HTTPServerConfig.Host + ":" + cfg.HTTPServerConfig.Port,
 		Handler: router,
 	}
 
 	return &App{
 		server: srv,
-		userService: controller,
+		authService: authService,
+		transactionService: transactionService,
+		purchaseService: purchaseService,
+		logger: logger,
 	}, nil
 }
 

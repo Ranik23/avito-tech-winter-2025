@@ -68,7 +68,7 @@ type RedisConfig struct {
 }
 
 type LogConfig struct {
-	Level string			`yaml:"level"`
+	Level string			`yaml:"level"`   // info ward error debug
 }
 
 type JWTConfig struct {

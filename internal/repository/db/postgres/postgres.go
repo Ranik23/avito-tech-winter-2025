@@ -5,8 +5,7 @@ import (
 	"avito/internal/models"
 	"context"
 	"errors"
-	"log/slog"
-
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
@@ -15,10 +14,16 @@ type PostgresRepositoryImpl struct {
 	logger *logger.Logger
 }
 
-func NewRepositoryImpl() *PostgresRepositoryImpl {
-	return &PostgresRepositoryImpl{
-		logger: logger.NewLogger(slog.LevelInfo),
+func NewRepositoryImpl(dsn string, logger *logger.Logger) (*PostgresRepositoryImpl, error) {
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err != nil {
+		return nil, err
 	}
+
+	return &PostgresRepositoryImpl{
+		logger: logger,
+		db: db,
+	}, nil
 }
 
 func (p *PostgresRepositoryImpl) CreateUser(ctx context.Context,
@@ -35,10 +40,10 @@ func (p *PostgresRepositoryImpl) CreateUser(ctx context.Context,
 	}()
 
 	user := &models.User{
-		Username:      userName,
+		Username:      	userName,
 		HashedPassword: hashedPassword,
-		Token:         tokenString,
-		Balance:       1000, 
+		Token:         	tokenString,
+		Balance:       	1000, 
 	}
 
 	if err := tx.Create(user).Error; err != nil {

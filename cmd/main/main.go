@@ -2,7 +2,6 @@ package main
 
 import (
 	"avito/internal/app"
-	"log"
 )
 
 
@@ -16,8 +15,8 @@ func main() {
 		panic(err)
 	}
 
-	
+
 	if err := app.Run(); err != nil {
-		log.Fatalf(err.Error())
+		panic(err)
 	}
 }

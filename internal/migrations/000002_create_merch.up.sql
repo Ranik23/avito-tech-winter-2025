@@ -1,5 +1,5 @@
 CREATE TABLE merch (
     id SERIAL PRIMARY KEY,
-    name TEXT UNIQUE NOT NULL,
+    name VARCHAR(255) NOT NULL UNIQUE,
     price INT NOT NULL
 );
