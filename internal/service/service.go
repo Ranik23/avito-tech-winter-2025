@@ -41,7 +41,6 @@ func NewServiceImpl(storage db.Repository, cache cache.Cache, logger *logger.Log
 	}
 }
 
-
 func (t *ServiceImpl) GetTransactions(ctx context.Context) ([]models.Transaction, error) {
 	transactions, err := t.storage.FindTransactions(ctx)
 	if err != nil {
@@ -97,8 +96,6 @@ func (a *ServiceImpl) Authenticate(ctx context.Context, userName string, passwor
 		return "", err
 	}
 
-	a.logger.Info("User found")
-
 	if user == nil {
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 		if err != nil {
@@ -120,13 +117,13 @@ func (a *ServiceImpl) Authenticate(ctx context.Context, userName string, passwor
 		return token, nil
 	}
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		a.logger.Error("failed to hash the password", slog.String("error", err.Error()))
-		return "", err
-	}
+	// hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	// if err != nil {
+	// 	a.logger.Error("failed to hash the password", slog.String("error", err.Error()))
+	// 	return "", err
+	// }
 
-	if err := bcrypt.CompareHashAndPassword(user.HashedPassword, hashedPassword); err != nil {
+	if err := bcrypt.CompareHashAndPassword(user.HashedPassword, []byte(password)); err != nil {
 		a.logger.Error("invalid password", slog.String("error", err.Error()))
 		return "", errors.New("invalid credentials")
 	}
