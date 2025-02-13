@@ -7,39 +7,26 @@ import (
 	"avito/internal/service"
 	"avito/internal/router/handlers"
 	"context"
-	"io"
 	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
-
 	"github.com/gin-gonic/gin"
-	"gopkg.in/yaml.v2"
 )
 
 type App struct {
 	userOperator 	service.Service
 	server  		*http.Server
 	logger  		*logger.Logger
+	cfg				*config.Config
 }
 
 func NewApp(configPath string) (*App, error) {
 
-	file, err := os.Open(configPath)
+	cfg, err := config.LoadConfig(configPath)
 	if err != nil {
-		return nil, err
-	}
-
-	data, err := io.ReadAll(file)
-	if err != nil {
-		return nil, err
-	}
-
-	var cfg config.Config
-
-	if err := yaml.Unmarshal(data, &cfg); err != nil {
 		return nil, err
 	}
 
@@ -52,7 +39,7 @@ func NewApp(configPath string) (*App, error) {
 		return nil, err
 	}
 
-	userOperator := service.NewServiceImpl(storage, nil, logger)
+	userOperator := service.NewServiceImpl(storage, nil, logger, cfg)
 
 	router := gin.Default()
 	
@@ -71,8 +58,9 @@ func NewApp(configPath string) (*App, error) {
 
 	return &App{
 		server: srv,
-
+		cfg: cfg,
 		logger: logger,
+		userOperator: userOperator,
 	}, nil
 }
 

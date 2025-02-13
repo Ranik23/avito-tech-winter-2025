@@ -9,10 +9,6 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-
-
-
-
 func LoadConfig(path string) (*Config, error) {
 
 	file, err := os.Open(path)

@@ -10,7 +10,7 @@ import (
 )
 
 type PostgresRepositoryImpl struct {
-	db *gorm.DB
+	db     *gorm.DB
 	logger *logger.Logger
 }
 
@@ -22,7 +22,7 @@ func NewRepositoryImpl(dsn string, logger *logger.Logger) (*PostgresRepositoryIm
 
 	return &PostgresRepositoryImpl{
 		logger: logger,
-		db: db,
+		db:     db,
 	}, nil
 }
 
@@ -40,10 +40,10 @@ func (p *PostgresRepositoryImpl) CreateUser(ctx context.Context,
 	}()
 
 	user := &models.User{
-		Username:      	userName,
+		Username:       userName,
 		HashedPassword: hashedPassword,
-		Token:         	tokenString,
-		Balance:       	1000, 
+		Token:          tokenString,
+		Balance:        1000,
 	}
 
 	if err := tx.Create(user).Error; err != nil {
@@ -54,10 +54,9 @@ func (p *PostgresRepositoryImpl) CreateUser(ctx context.Context,
 	return tx.Commit().Error
 }
 
-
 func (p *PostgresRepositoryImpl) CreateTransaction(ctx context.Context,
-	senderName string, 
-	receiverName string, 
+	senderName string,
+	receiverName string,
 	amount int) error {
 
 	tx := p.db.WithContext(ctx).Begin()
@@ -85,12 +84,12 @@ func (p *PostgresRepositoryImpl) CreateTransaction(ctx context.Context,
 		return err
 	}
 
-	if err := tx.Model(&sender).Update("balance", sender.Balance - amount).Error; err != nil {
+	if err := tx.Model(&sender).Update("balance", sender.Balance-amount).Error; err != nil {
 		tx.Rollback()
 		return err
 	}
 
-	if err := tx.Model(&receiver).Update("balance", receiver.Balance + amount).Error; err != nil {
+	if err := tx.Model(&receiver).Update("balance", receiver.Balance+amount).Error; err != nil {
 		tx.Rollback()
 		return err
 	}
@@ -136,15 +135,15 @@ func (p *PostgresRepositoryImpl) CreatePurchase(ctx context.Context,
 		return errors.New("insufficient funds for purchase")
 	}
 
-	if err := tx.Model(&purchaser).Update("balance", purchaser.Balance - merch.Price).Error; err != nil {
+	if err := tx.Model(&purchaser).Update("balance", purchaser.Balance-merch.Price).Error; err != nil {
 		tx.Rollback()
 		return err
 	}
 
 	purchase := &models.Purchase{
-		UserID: 	purchaser.ID,
-		MerchID:  	merch.ID,
-		Price:  	merch.Price,
+		UserID:  purchaser.ID,
+		MerchID: merch.ID,
+		Price:   merch.Price,
 	}
 
 	if err := tx.Create(purchase).Error; err != nil {
@@ -163,19 +162,39 @@ func (p *PostgresRepositoryImpl) FindUserByName(ctx context.Context, userName st
 	return &user, nil
 }
 
-func (p *PostgresRepositoryImpl) FindTransactions(ctx context.Context) ([]models.Transaction, error) {
+func (p *PostgresRepositoryImpl) FindAppliedTransactions(ctx context.Context, userName string) ([]models.Transaction, error) {
 	var transactions []models.Transaction
-	if err := p.db.WithContext(ctx).Find(&transactions).Error; err != nil {
+
+	user, err := p.FindUserByName(ctx, userName)
+	if err != nil {
 		return nil, err
 	}
+
+	if err := p.db.WithContext(ctx).
+		Where("senderid = ? OR receiverid = ?", user.ID, user.ID).
+		Find(&transactions).Error; err != nil {
+		return nil, err
+	}
+
 	return transactions, nil
 }
 
-func (p *PostgresRepositoryImpl) FindMerch(ctx context.Context) ([]models.Merch, error) {
-	var merchList []models.Merch
-	if err := p.db.WithContext(ctx).Find(&merchList).Error; err != nil {
+func (p *PostgresRepositoryImpl) FindBoughtMerch(ctx context.Context, userName string) ([]string, error) {
+	var merchNames []string
+
+	user, err := p.FindUserByName(ctx, userName)
+	if err != nil {
 		return nil, err
 	}
-	return merchList, nil
-}
 
+	if err = p.db.WithContext(ctx).
+		Table("purchases").
+		Select("purchases.id, purchases.user_id, purchases.merch_id, purchases.price, purchases.created_at, merch.name AS merch_name").
+		Joins("JOIN merch ON purchases.merch_id = merch.id").
+		Where("purchases.user_id = ?", user.ID).
+		Pluck("merch.name", &merchNames).Error; err != nil {
+			return nil, err
+		}
+
+	return merchNames, nil
+}

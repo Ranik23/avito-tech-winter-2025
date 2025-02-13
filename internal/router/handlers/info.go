@@ -18,12 +18,35 @@ func InfoHandler(userOperator service.Service) gin.HandlerFunc {
 		ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
 		defer cancel()
 
-		_, err := userOperator.VerifyToken(ctx, tokenString)
+		user, err := userOperator.VerifyToken(ctx, tokenString)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, responses.ErrorResponse{
 				Errors: err.Error(),
 			})
 			return
 		}
+
+		coins := user.Balance
+
+		transactions, err := userOperator.GetAppliedTransactions(ctx, user.Username)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, responses.ErrorResponse{
+				Errors: err.Error(),
+			})
+			return 
+		}
+
+		merchList, err := userOperator.GetBoughtMerch(ctx, user.Username)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, responses.ErrorResponse{
+				Errors: err.Error(),
+			})
+			return
+		}
+
+		c.JSON(http.StatusOK, responses.InfoResponse{
+			Coins: coins,
+			
+		})
 	}
 }

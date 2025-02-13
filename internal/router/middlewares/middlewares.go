@@ -4,7 +4,6 @@ import (
 	"avito/internal/logger"
 	"fmt"
 	"time"
-
 	"github.com/gin-gonic/gin"
 )
 

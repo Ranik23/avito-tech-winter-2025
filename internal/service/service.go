@@ -1,6 +1,7 @@
 package service
 
 import (
+	"avito/config"
 	"avito/internal/apperror"
 	"avito/internal/logger"
 	"avito/internal/models"
@@ -19,57 +20,59 @@ import (
 
 
 type Service interface {
-	GetTransactions(ctx context.Context) ([]models.Transaction, error)
-	SendCoins(ctx context.Context, fromUser string, toUser string, amount int) error
-	Buy(ctx context.Context, purchaserName string, itemName string) error
-	GetMerch(ctx context.Context) ([]models.Merch, error)
-	Authenticate(ctx context.Context, userName string, password string) (string, error)
-	VerifyToken(ctx context.Context, tokenString string) 				(*models.User, error)
+	GetAppliedTransactions(ctx context.Context, userName string) 				([]models.Transaction, error)
+	SendCoins(ctx context.Context, fromUser string, toUser string, amount int) 	error
+	Buy(ctx context.Context, purchaserName string, itemName string) 			error
+	GetBoughtMerch(ctx context.Context, purchaserName string) 					([]string, error)
+	Authenticate(ctx context.Context, userName string, password string) 		(string, error)
+	VerifyToken(ctx context.Context, tokenString string) 						(*models.User, error)
 }
 
 type ServiceImpl struct {
 	storage 	db.Repository
 	cache 		cache.Cache
 	logger 		*logger.Logger
+	cfg			*config.Config
 }
 
-func NewServiceImpl(storage db.Repository, cache cache.Cache, logger *logger.Logger) *ServiceImpl {
+func NewServiceImpl(storage db.Repository, cache cache.Cache, logger *logger.Logger, config *config.Config) *ServiceImpl {
 	return &ServiceImpl{
 		storage: storage,
 		cache: cache,
 		logger: logger,
+		cfg: config,
 	}
 }
 
-func (t *ServiceImpl) GetTransactions(ctx context.Context) ([]models.Transaction, error) {
-	transactions, err := t.storage.FindTransactions(ctx)
+func (a *ServiceImpl) GetAppliedTransactions(ctx context.Context, userName string) ([]models.Transaction, error) {
+	transactions, err := a.storage.FindAppliedTransactions(ctx, userName)
 	if err != nil {
-		t.logger.Error("failed to find transactions", slog.String("error", err.Error()))
+		a.logger.Error("failed to find transactions", slog.String("error", err.Error()))
 		return nil, err 
 	}
 	return transactions, nil
 }
 
-func (t *ServiceImpl) SendCoins(ctx context.Context, fromUser string, toUser string, amount int) error {
-	if err := t.storage.CreateTransaction(ctx, fromUser, toUser, amount); err != nil {
-		t.logger.Error("faield to create the transaction", slog.String("error", err.Error()))
+func (a *ServiceImpl) SendCoins(ctx context.Context, fromUser string, toUser string, amount int) error {
+	if err := a.storage.CreateTransaction(ctx, fromUser, toUser, amount); err != nil {
+		a.logger.Error("faield to create the transaction", slog.String("error", err.Error()))
 		return err
 	}
 	return nil
 }
 
-func (p *ServiceImpl) GetMerch(ctx context.Context) ([]models.Merch, error) {
-	merch, err := p.storage.FindMerch(ctx)
+func (a *ServiceImpl) GetBoughtMerch(ctx context.Context, purchaserName string) ([]string, error) {
+	merch, err := a.storage.FindBoughtMerch(ctx, purchaserName)
 	if err != nil {
-		p.logger.Error("failed to get the merch", slog.String("error", err.Error()))
+		a.logger.Error("failed to get the merch", slog.String("error", err.Error()))
 		return nil, err
 	}
 	return merch, nil
 }
 
-func (p *ServiceImpl) Buy(ctx context.Context, purchaserName string, itemName string) error {
-	if err := p.storage.CreatePurchase(ctx, purchaserName, itemName); err != nil {
-		p.logger.Error("failed to create the purchase", slog.String("error", err.Error()))
+func (a *ServiceImpl) Buy(ctx context.Context, purchaserName string, itemName string) error {
+	if err := a.storage.CreatePurchase(ctx, purchaserName, itemName); err != nil {
+		a.logger.Error("failed to create the purchase", slog.String("error", err.Error()))
 		return err
 	}
 
@@ -77,6 +80,7 @@ func (p *ServiceImpl) Buy(ctx context.Context, purchaserName string, itemName st
 }
 
 var jwtSecret = []byte("your_secret_key")
+
 
 func generateJWT(userName string) (string, error) {
 	claims := jwt.MapClaims{
@@ -87,7 +91,6 @@ func generateJWT(userName string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString(jwtSecret)
 }
-
 
 func (a *ServiceImpl) Authenticate(ctx context.Context, userName string, password string) (string, error) {
 	user, err := a.storage.FindUserByName(ctx, userName)
@@ -117,12 +120,6 @@ func (a *ServiceImpl) Authenticate(ctx context.Context, userName string, passwor
 		return token, nil
 	}
 
-	// hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	// if err != nil {
-	// 	a.logger.Error("failed to hash the password", slog.String("error", err.Error()))
-	// 	return "", err
-	// }
-
 	if err := bcrypt.CompareHashAndPassword(user.HashedPassword, []byte(password)); err != nil {
 		a.logger.Error("invalid password", slog.String("error", err.Error()))
 		return "", errors.New("invalid credentials")
@@ -138,7 +135,6 @@ func (a *ServiceImpl) VerifyToken(ctx context.Context, tokenString string) (*mod
 		}
 		return jwtSecret, nil
 	})
-
 	if err != nil {
 		a.logger.Error("invalid token", slog.String("error", err.Error()))
 		return nil, apperror.ErrInvalidToken
