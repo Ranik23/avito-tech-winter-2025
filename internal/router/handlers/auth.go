@@ -11,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func AuthHandler(userOperator service.Service) gin.HandlerFunc {
+func AuthHandler(manager *service.ServiceManager) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req requests.AuthRequest
 
@@ -27,7 +27,7 @@ func AuthHandler(userOperator service.Service) gin.HandlerFunc {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
-		token, err := userOperator.Authenticate(ctx, userName, password)
+		token, err := manager.AuthService.Authenticate(ctx, userName, password)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, responses.ErrorResponse{
 				Errors: err.Error(),

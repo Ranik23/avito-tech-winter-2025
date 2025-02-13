@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func InfoHandler(userOperator service.Service) gin.HandlerFunc {
+func InfoHandler(manager *service.ServiceManager) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
 		tokenString := c.GetHeader("Authorization")
@@ -18,7 +18,7 @@ func InfoHandler(userOperator service.Service) gin.HandlerFunc {
 		ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
 		defer cancel()
 
-		user, err := userOperator.VerifyToken(ctx, tokenString)
+		user, err := manager.AuthService.VerifyToken(ctx, tokenString)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, responses.ErrorResponse{
 				Errors: err.Error(),
@@ -28,7 +28,7 @@ func InfoHandler(userOperator service.Service) gin.HandlerFunc {
 
 		coins := user.Balance
 
-		transactionsSent, err := userOperator.GetSentTransactions(ctx, user.Username)
+		transactionsSent, err := manager.TransactionService.GetSentTransactions(ctx, user.Username)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, responses.ErrorResponse{
 				Errors: err.Error(),
@@ -36,7 +36,7 @@ func InfoHandler(userOperator service.Service) gin.HandlerFunc {
 			return 
 		}
 
-		transactionsReceived, err := userOperator.GetReceivedTransactions(ctx, user.Username)
+		transactionsReceived, err := manager.TransactionService.GetReceivedTransactions(ctx, user.Username)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, responses.ErrorResponse{
 				Errors: err.Error(),
@@ -44,7 +44,7 @@ func InfoHandler(userOperator service.Service) gin.HandlerFunc {
 			return 
 		}
 
-		merchList, err := userOperator.GetBoughtMerch(ctx, user.Username)
+		merchList, err := manager.MerchService.GetBoughtMerch(ctx, user.Username)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, responses.ErrorResponse{
 				Errors: err.Error(),

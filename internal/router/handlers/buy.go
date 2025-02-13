@@ -12,7 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func BuyHandler(userOperator service.Service) gin.HandlerFunc {
+func BuyHandler(manager *service.ServiceManager) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tokenString := c.GetHeader("Authorization")
 
@@ -21,7 +21,7 @@ func BuyHandler(userOperator service.Service) gin.HandlerFunc {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
-		user, err := userOperator.VerifyToken(ctx, tokenString)
+		user, err := manager.AuthService.VerifyToken(ctx, tokenString)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, responses.ErrorResponse{
 				Errors: err.Error(),
@@ -31,7 +31,7 @@ func BuyHandler(userOperator service.Service) gin.HandlerFunc {
 
 		purchaserName := user.Username
 
-		if err := userOperator.Buy(ctx, purchaserName, itemName); err != nil {
+		if err := manager.MerchService.Buy(ctx, purchaserName, itemName); err != nil {
 			statusCode := http.StatusInternalServerError
 
 			if errors.Is(err, apperror.ErrItemNotFound) {

@@ -11,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func SendCoinHandler(userOperator service.Service) gin.HandlerFunc {
+func SendCoinHandler(manager *service.ServiceManager) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req requests.SendCoinRequest
 
@@ -25,7 +25,7 @@ func SendCoinHandler(userOperator service.Service) gin.HandlerFunc {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
-		user, err := userOperator.VerifyToken(ctx, tokenString)
+		user, err := manager.AuthService.VerifyToken(ctx, tokenString)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, responses.ErrorResponse{
 				Errors: err.Error(),
@@ -35,7 +35,7 @@ func SendCoinHandler(userOperator service.Service) gin.HandlerFunc {
 
 		userName := user.Username
 
-		if err := userOperator.SendCoins(ctx, userName, req.ToUser, req.Amount); err != nil {
+		if err := manager.TransactionService.SendCoins(ctx, userName, req.ToUser, req.Amount); err != nil {
 			c.JSON(http.StatusInternalServerError, responses.ErrorResponse{Errors: err.Error()})
 			return
 		}

@@ -17,7 +17,7 @@ import (
 )
 
 type App struct {
-	userOperator 	service.Service
+	serviceManager 	*service.ServiceManager
 	server  		*http.Server
 	logger  		*logger.Logger
 	cfg				*config.Config
@@ -36,19 +36,20 @@ func NewApp(configPath string) (*App, error) {
 
 	storage, err := postgres.NewRepositoryImpl(dsn, logger)
 	if err != nil {
+		logger.Error("Failed to initialize database", slog.String("error", err.Error()))
 		return nil, err
 	}
 
-	userOperator := service.NewServiceImpl(storage, nil, logger, cfg)
+	serviceManager := service.NewServiceManager(storage, logger)
 
 	router := gin.Default()
 	
 	routes := router.Group("/api")
 	{
-		routes.GET("/info", handlers.InfoHandler(userOperator))
-		routes.POST("/sendCoin", handlers.SendCoinHandler(userOperator))
-		routes.GET("/buy/{item}", handlers.BuyHandler(userOperator))
-		routes.POST("/auth", handlers.AuthHandler(userOperator))
+		routes.GET("/info", handlers.InfoHandler(serviceManager))
+		routes.POST("/sendCoin", handlers.SendCoinHandler(serviceManager))
+		routes.GET("/buy/:item", handlers.BuyHandler(serviceManager))
+		routes.POST("/auth", handlers.AuthHandler(serviceManager))
 	}
 
 	srv := &http.Server{
@@ -56,11 +57,14 @@ func NewApp(configPath string) (*App, error) {
 		Handler: router,
 	}
 
+
+	logger.Info("Application initialized successfully")
+
 	return &App{
 		server: srv,
 		cfg: cfg,
 		logger: logger,
-		userOperator: userOperator,
+		serviceManager: serviceManager,
 	}, nil
 }
 
@@ -88,10 +92,8 @@ func (a *App) Run() error {
 			return err
 		}
 
-		select {
-		case <-contextShutDown.Done():
-			a.logger.Info("Server shutdown complete")
-		}
+		<-contextShutDown.Done()
+		a.logger.Info("Server shutdown complete")
 	case err := <-errorCh:
 		a.logger.Error("Server encountered an error", slog.String("error", err.Error()))
 		return err
@@ -102,7 +104,7 @@ func (a *App) Run() error {
 
 func (a *App) ShutDown(ctx context.Context) error {
 
-	a.logger.Info("Shutting Down the server")
+	a.logger.Info("Shutting Down the server...")
 
 	if err := a.server.Shutdown(ctx); err != nil {
 		a.logger.Error("Failed to shutdown the server", slog.String("error", err.Error()))
