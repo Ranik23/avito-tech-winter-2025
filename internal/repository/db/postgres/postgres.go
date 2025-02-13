@@ -3,8 +3,10 @@ package postgres
 import (
 	"avito/internal/logger"
 	"avito/internal/models"
+	"avito/internal/router/handlers/responses"
 	"context"
 	"errors"
+
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -162,7 +164,7 @@ func (p *PostgresRepositoryImpl) FindUserByName(ctx context.Context, userName st
 	return &user, nil
 }
 
-func (p *PostgresRepositoryImpl) FindAppliedTransactions(ctx context.Context, userName string) ([]models.Transaction, error) {
+func (p *PostgresRepositoryImpl) FindAppliedTransactions(ctx context.Context, sentORreceived bool, userName string) ([]models.Transaction, error) {
 	var transactions []models.Transaction
 
 	user, err := p.FindUserByName(ctx, userName)
@@ -170,17 +172,25 @@ func (p *PostgresRepositoryImpl) FindAppliedTransactions(ctx context.Context, us
 		return nil, err
 	}
 
-	if err := p.db.WithContext(ctx).
-		Where("senderid = ? OR receiverid = ?", user.ID, user.ID).
-		Find(&transactions).Error; err != nil {
-		return nil, err
+	if sentORreceived {
+		if err := p.db.WithContext(ctx).
+			Where("senderid = ?", user.ID).
+			Find(&transactions).Error; err != nil {
+			return nil, err
+		}
+	} else {
+		if err := p.db.WithContext(ctx).
+			Where("receiverid = ?", user.ID).
+			Find(&transactions).Error; err != nil {
+			return nil, err
+		}
 	}
 
 	return transactions, nil
 }
 
-func (p *PostgresRepositoryImpl) FindBoughtMerch(ctx context.Context, userName string) ([]string, error) {
-	var merchNames []string
+func (p *PostgresRepositoryImpl) FindBoughtMerch(ctx context.Context, userName string) ([]responses.InventoryItem, error) {
+	var results []responses.InventoryItem
 
 	user, err := p.FindUserByName(ctx, userName)
 	if err != nil {
@@ -189,12 +199,13 @@ func (p *PostgresRepositoryImpl) FindBoughtMerch(ctx context.Context, userName s
 
 	if err = p.db.WithContext(ctx).
 		Table("purchases").
-		Select("purchases.id, purchases.user_id, purchases.merch_id, purchases.price, purchases.created_at, merch.name AS merch_name").
+		Select("merch.name AS merch_name, COUNT(*) AS count").
 		Joins("JOIN merch ON purchases.merch_id = merch.id").
 		Where("purchases.user_id = ?", user.ID).
-		Pluck("merch.name", &merchNames).Error; err != nil {
-			return nil, err
-		}
+		Group("merch.name").
+		Scan(&results).Error; err != nil {
+		return nil, err
+	}
 
-	return merchNames, nil
+	return results, nil
 }

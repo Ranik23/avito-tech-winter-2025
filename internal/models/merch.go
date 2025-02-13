@@ -6,3 +6,8 @@ type Merch struct {
 	Name  string `gorm:"column:name;unique;not null"`
 	Price int    `gorm:"column:price;not null"`
 }
+
+type BoughtMerch struct {
+	MerchName string
+	Count     int
+}

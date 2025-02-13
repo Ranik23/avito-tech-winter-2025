@@ -2,6 +2,7 @@ package db
 
 import (
 	"avito/internal/models"
+	"avito/internal/router/handlers/responses"
 	"context"
 )
 
@@ -12,6 +13,6 @@ type Repository interface {
 	CreatePurchase(ctx context.Context, purchaserName string, merchName string) 			        error
 
 	FindUserByName(ctx context.Context, userName string) 											(*models.User, error)
-	FindAppliedTransactions(ctx context.Context, senderORbuyerName ...string)						([]models.Transaction, error)
-	FindBoughtMerch(ctx context.Context, purchaserName string)										([]string, error)
+	FindAppliedTransactions(ctx context.Context, sentORreceived bool, senderORbuyerName string)		([]models.Transaction, error)
+	FindBoughtMerch(ctx context.Context, purchaserName string)										([]responses.InventoryItem, error)
 }

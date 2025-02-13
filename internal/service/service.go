@@ -7,6 +7,7 @@ import (
 	"avito/internal/models"
 	"avito/internal/repository/cache"
 	"avito/internal/repository/db"
+	"avito/internal/router/handlers/responses"
 	"context"
 	"errors"
 	"log/slog"
@@ -20,10 +21,12 @@ import (
 
 
 type Service interface {
-	GetAppliedTransactions(ctx context.Context, userName string) 				([]models.Transaction, error)
+	GetSentTransactions(ctx context.Context, userName string) 					([]responses.Transaction, error)
+	GetReceivedTransactions(ctx context.Context, userName string)				([]responses.Transaction, error)
+
 	SendCoins(ctx context.Context, fromUser string, toUser string, amount int) 	error
 	Buy(ctx context.Context, purchaserName string, itemName string) 			error
-	GetBoughtMerch(ctx context.Context, purchaserName string) 					([]string, error)
+	GetBoughtMerch(ctx context.Context, purchaserName string) 					([]responses.InventoryItem, error)
 	Authenticate(ctx context.Context, userName string, password string) 		(string, error)
 	VerifyToken(ctx context.Context, tokenString string) 						(*models.User, error)
 }
@@ -44,13 +47,41 @@ func NewServiceImpl(storage db.Repository, cache cache.Cache, logger *logger.Log
 	}
 }
 
-func (a *ServiceImpl) GetAppliedTransactions(ctx context.Context, userName string) ([]models.Transaction, error) {
-	transactions, err := a.storage.FindAppliedTransactions(ctx, userName)
+func (a *ServiceImpl) GetSentTransactions(ctx context.Context, userName string) ([]responses.Transaction, error) {
+	transactions, err := a.storage.FindAppliedTransactions(ctx, true, userName)
 	if err != nil {
 		a.logger.Error("failed to find transactions", slog.String("error", err.Error()))
 		return nil, err 
 	}
-	return transactions, nil
+	var finalTransactions []responses.Transaction
+
+	for _, transaction := range transactions {
+		finalTransactions = append(finalTransactions, responses.Transaction{
+			FromUser: transaction.Sender.Username,
+			ToUser: transaction.Receiver.Username,
+			Amount: transaction.Amount,
+		})
+	}
+	return finalTransactions, nil
+}
+
+func (a *ServiceImpl) GetReceivedTransactions(ctx context.Context, userName string) ([]responses.Transaction, error) {
+	transactions, err := a.storage.FindAppliedTransactions(ctx, false, userName)
+	if err != nil {
+		a.logger.Error("failed to find transactions", slog.String("error", err.Error()))
+		return nil, err 
+	}
+
+	var finalTransactions []responses.Transaction
+
+	for _, transaction := range transactions {
+		finalTransactions = append(finalTransactions, responses.Transaction{
+			FromUser: transaction.Sender.Username,
+			ToUser: transaction.Receiver.Username,
+			Amount: transaction.Amount,
+		})
+	}
+	return finalTransactions, nil
 }
 
 func (a *ServiceImpl) SendCoins(ctx context.Context, fromUser string, toUser string, amount int) error {
@@ -61,7 +92,7 @@ func (a *ServiceImpl) SendCoins(ctx context.Context, fromUser string, toUser str
 	return nil
 }
 
-func (a *ServiceImpl) GetBoughtMerch(ctx context.Context, purchaserName string) ([]string, error) {
+func (a *ServiceImpl) GetBoughtMerch(ctx context.Context, purchaserName string) ([]responses.InventoryItem, error) {
 	merch, err := a.storage.FindBoughtMerch(ctx, purchaserName)
 	if err != nil {
 		a.logger.Error("failed to get the merch", slog.String("error", err.Error()))

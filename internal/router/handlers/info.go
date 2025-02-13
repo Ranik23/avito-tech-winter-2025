@@ -28,7 +28,15 @@ func InfoHandler(userOperator service.Service) gin.HandlerFunc {
 
 		coins := user.Balance
 
-		transactions, err := userOperator.GetAppliedTransactions(ctx, user.Username)
+		transactionsSent, err := userOperator.GetSentTransactions(ctx, user.Username)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, responses.ErrorResponse{
+				Errors: err.Error(),
+			})
+			return 
+		}
+
+		transactionsReceived, err := userOperator.GetReceivedTransactions(ctx, user.Username)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, responses.ErrorResponse{
 				Errors: err.Error(),
@@ -44,9 +52,15 @@ func InfoHandler(userOperator service.Service) gin.HandlerFunc {
 			return
 		}
 
+		coinHistory := responses.CoinHistory{
+			Received: transactionsReceived,
+			Sent: transactionsSent,
+		}
+
 		c.JSON(http.StatusOK, responses.InfoResponse{
 			Coins: coins,
-			
+			Inventory: merchList,
+			CoinHistory: coinHistory,
 		})
 	}
 }
