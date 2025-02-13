@@ -4,13 +4,8 @@ import (
 	"avito/config"
 	"avito/internal/logger"
 	"avito/internal/repository/db/postgres"
-
-	// "avito/internal/repository/db"
-	// "avito/internal/repository/db/postgres"
+	"avito/internal/service"
 	"avito/internal/router/handlers"
-	"avito/internal/service/auth"
-	"avito/internal/service/purchase"
-	"avito/internal/service/transaction"
 	"context"
 	"io"
 	"log/slog"
@@ -25,11 +20,9 @@ import (
 )
 
 type App struct {
-	authService  		auth.AuthService
-	purchaseService 	purchase.PurchaseService
-	transactionService 	transaction.TransactionService
-	server  	*http.Server
-	logger  	*logger.Logger
+	userOperator 	service.Service
+	server  		*http.Server
+	logger  		*logger.Logger
 }
 
 func NewApp(configPath string) (*App, error) {
@@ -59,18 +52,16 @@ func NewApp(configPath string) (*App, error) {
 		return nil, err
 	}
 
-	authService := auth.NewAuthServiceImpl(storage, nil, logger)
-	transactionService := transaction.NewTransactionServiceImpl(storage, nil, logger)
-	purchaseService := purchase.NewPurchaseServiceImpl(storage, nil, logger)
+	userOperator := service.NewServiceImpl(storage, nil, logger)
 
 	router := gin.Default()
 	
 	routes := router.Group("/api")
 	{
-		routes.GET("/info", handlers.InfoHandler(nil))
-		routes.POST("/sendCoin", handlers.SendCoinHandler(nil))
-		routes.GET("/buy/{item}", handlers.BuyHandler(nil))
-		routes.POST("/auth", handlers.AuthHandler(authService))
+		routes.GET("/info", handlers.InfoHandler(userOperator))
+		routes.POST("/sendCoin", handlers.SendCoinHandler(userOperator))
+		routes.GET("/buy/{item}", handlers.BuyHandler(userOperator))
+		routes.POST("/auth", handlers.AuthHandler(userOperator))
 	}
 
 	srv := &http.Server{
@@ -80,9 +71,7 @@ func NewApp(configPath string) (*App, error) {
 
 	return &App{
 		server: srv,
-		authService: authService,
-		transactionService: transactionService,
-		purchaseService: purchaseService,
+
 		logger: logger,
 	}, nil
 }

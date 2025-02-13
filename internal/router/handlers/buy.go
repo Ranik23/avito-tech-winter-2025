@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"avito/internal/apperror"
-	"avito/internal/controller"
 	"avito/internal/router/handlers/responses"
+	"avito/internal/service"
 	"context"
 	"errors"
 	"net/http"
@@ -12,7 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func BuyHandler(userOperator *controller.Controller) gin.HandlerFunc {
+func BuyHandler(userOperator service.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tokenString := c.GetHeader("Authorization")
 

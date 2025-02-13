@@ -1,9 +1,9 @@
 package handlers
 
 import (
-	"avito/internal/controller"
 	"avito/internal/router/handlers/requests"
 	"avito/internal/router/handlers/responses"
+	"avito/internal/service"
 	"context"
 	"net/http"
 	"time"
@@ -11,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func SendCoinHandler(userOperator *controller.Controller) gin.HandlerFunc {
+func SendCoinHandler(userOperator service.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req requests.SendCoinRequest
 

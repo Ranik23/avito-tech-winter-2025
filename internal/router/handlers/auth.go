@@ -3,7 +3,7 @@ package handlers
 import (
 	"avito/internal/router/handlers/requests"
 	"avito/internal/router/handlers/responses"
-	"avito/internal/service/auth"
+	"avito/internal/service"
 	"context"
 	"net/http"
 	"time"
@@ -11,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func AuthHandler(authService auth.AuthService) gin.HandlerFunc {
+func AuthHandler(userOperator service.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req requests.AuthRequest
 
@@ -27,7 +27,7 @@ func AuthHandler(authService auth.AuthService) gin.HandlerFunc {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
-		token, err := authService.Authenticate(ctx, userName, password)
+		token, err := userOperator.Authenticate(ctx, userName, password)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, responses.ErrorResponse{
 				Errors: err.Error(),
