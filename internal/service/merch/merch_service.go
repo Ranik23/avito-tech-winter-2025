@@ -9,7 +9,7 @@ import (
 )
 
 
-// ПИСАТЬ ТЕСТЫ ТУТ - БЕСПОЛЕЗНО. ТУТ НЕ ЛОГИКИ - НАДО ПИСАТЬ ТЕСТЫ НА УРОВНЕ НИЖЕ - НА УРОВНЕ БД
+// ПИСАТЬ ТЕСТЫ ТУТ - БЕСПОЛЕЗНО. ТУТ НЕ ЛОГИКИ
 type merchServiceImpl struct {
 	storage repository.Repository
 	logger  *logger.Logger
