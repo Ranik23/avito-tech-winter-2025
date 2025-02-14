@@ -8,8 +8,6 @@ import (
 	"log/slog"
 )
 
-
-// ПИСАТЬ ТЕСТЫ ТУТ - БЕСПОЛЕЗНО. ТУТ НЕ ЛОГИКИ
 type merchServiceImpl struct {
 	storage repository.Repository
 	logger  *logger.Logger

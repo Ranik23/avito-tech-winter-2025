@@ -43,7 +43,11 @@ func (m *MockRepositoryImpl) FindBoughtMerch(ctx context.Context, purchaserName 
 }
 
 func (m *MockRepositoryImpl) FindTransactions(ctx context.Context) ([]models.Transaction, error) {
-	return nil, nil
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]models.Transaction), args.Error(1)
 }
 
 func (m *MockRepositoryImpl) FindMerchByName(ctx context.Context, merchName string) (*models.Merch, error) {
