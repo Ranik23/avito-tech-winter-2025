@@ -27,6 +27,14 @@ func NewRepositoryImpl(dsn string, logger *logger.Logger) (*PostgresRepositoryIm
 	}, nil
 }
 
+func (p *PostgresRepositoryImpl) FindTransactions(ctx context.Context) ([]models.Transaction, error) {
+	var transactions []models.Transaction
+	if err := p.db.WithContext(ctx).Find(&transactions).Error; err != nil {
+		return nil, err
+	}
+	return transactions, nil
+}
+
 func (p *PostgresRepositoryImpl) CreateUser(ctx context.Context, userName string, hashedPassword []byte, tokenString string) error {
 	user := &models.User{
 		Username:       userName,
@@ -34,14 +42,11 @@ func (p *PostgresRepositoryImpl) CreateUser(ctx context.Context, userName string
 		Token:          tokenString,
 		Balance:        1000,
 	}
-
 	if err := p.db.WithContext(ctx).Create(user).Error; err != nil {
 		return err
 	}
-
 	return nil
 }
-
 
 func (p *PostgresRepositoryImpl) CreateTransaction(ctx context.Context,
 	senderName string,
@@ -63,22 +68,7 @@ func (p *PostgresRepositoryImpl) CreateTransaction(ctx context.Context,
 		return err
 	}
 
-	if sender.Balance < amount {
-		tx.Rollback()
-		return errors.New("недостаточно средств")
-	}
-
 	if err := tx.Where("username = ?", receiverName).First(&receiver).Error; err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	if err := tx.Model(&sender).Update("balance", sender.Balance-amount).Error; err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	if err := tx.Model(&receiver).Update("balance", receiver.Balance+amount).Error; err != nil {
 		tx.Rollback()
 		return err
 	}
@@ -96,6 +86,37 @@ func (p *PostgresRepositoryImpl) CreateTransaction(ctx context.Context,
 
 	return tx.Commit().Error
 }
+
+
+func (p *PostgresRepositoryImpl) UpdateBalance(ctx context.Context, userName string, amount int) error {
+
+	tx := p.db.WithContext(ctx).Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	var purchaser models.User
+
+	if err := tx.Where("userName = ?", userName).First(&purchaser).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if purchaser.Balance < amount {
+		tx.Rollback()
+		return errors.New("insufficient funds for purchase")
+	}
+
+	if err := tx.Where("userName = ?", userName).Update("balance", purchaser.Balance + amount).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return tx.Commit().Error
+}
+
 
 func (p *PostgresRepositoryImpl) CreatePurchase(ctx context.Context, purchaserName string, merchName string) error {
 
@@ -115,16 +136,6 @@ func (p *PostgresRepositoryImpl) CreatePurchase(ctx context.Context, purchaserNa
 
 	var merch models.Merch
 	if err := tx.Where("name = ?", merchName).First(&merch).Error; err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	if purchaser.Balance < merch.Price {
-		tx.Rollback()
-		return errors.New("insufficient funds for purchase")
-	}
-
-	if err := tx.Model(&purchaser).Update("balance", purchaser.Balance - merch.Price).Error; err != nil {
 		tx.Rollback()
 		return err
 	}
@@ -151,8 +162,7 @@ func (p *PostgresRepositoryImpl) FindUserByName(ctx context.Context, userName st
 	return &user, nil
 }
 
-
-func (p *PostgresRepositoryImpl) FindAppliedTransactions(ctx context.Context, sentORreceived bool, userName string) ([]models.Transaction, error) {
+func (p *PostgresRepositoryImpl) FindAppliedTransactions(ctx context.Context, userName string) ([]models.Transaction, error) {
 	tx := p.db.WithContext(ctx).Begin()
 	defer func() {
 		if r := recover(); r != nil {
@@ -168,18 +178,10 @@ func (p *PostgresRepositoryImpl) FindAppliedTransactions(ctx context.Context, se
 		return nil, err
 	}
 
-	if sentORreceived {
-		if err := tx.Where("sender_id = ?", user.ID).Find(&transactions).Error; err != nil {
-			tx.Rollback()
-			return nil, err
-		}
-	} else {
-		if err := tx.Where("receiver_id = ?", user.ID).Find(&transactions).Error; err != nil {
-			tx.Rollback()
-			return nil, err
-		}
+	if err := tx.Where("sender_id = ? OR receiver_id = ?", user.ID, user.ID).Find(&transactions).Error; err != nil {
+		tx.Rollback()
+		return nil, err
 	}
-
 	return transactions, tx.Commit().Error
 }
 
@@ -210,4 +212,14 @@ func (p *PostgresRepositoryImpl) FindBoughtMerch(ctx context.Context, userName s
 	}
 
 	return results, tx.Commit().Error
+}
+
+
+func (p *PostgresRepositoryImpl) FindMerchByName(ctx context.Context, merchName string)	 (*models.Merch, error) {
+	var merch models.Merch
+
+	if err := p.db.Where("name = ?", merchName).First(&merch).Error; err != nil {
+		return nil, err
+	}
+	return &merch, nil
 }

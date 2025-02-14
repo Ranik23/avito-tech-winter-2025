@@ -34,18 +34,27 @@ func (m *MockRepositoryImpl) FindUserByName(ctx context.Context, userName string
 	return nil, args.Error(1)
 }
 
-func (m *MockRepositoryImpl) FindAppliedTransactions(ctx context.Context, sentORreceived bool, senderORbuyerName string) ([]models.Transaction, error) {
-	args := m.Called(ctx, sentORreceived, senderORbuyerName)
-	if args.Get(0) != nil {
-		return args.Get(0).([]models.Transaction), args.Error(1)
-	}
-	return nil, args.Error(1)
-}
-
 func (m *MockRepositoryImpl) FindBoughtMerch(ctx context.Context, purchaserName string) ([]responses.InventoryItem, error) {
 	args := m.Called(ctx, purchaserName)
 	if args.Get(0) != nil {
 		return args.Get(0).([]responses.InventoryItem), args.Error(1)
 	}
 	return nil, args.Error(1)
+}
+
+func (m *MockRepositoryImpl) FindTransactions(ctx context.Context) ([]models.Transaction, error) {
+	return nil, nil
+}
+
+func (m *MockRepositoryImpl) FindMerchByName(ctx context.Context, merchName string) (*models.Merch, error) {
+	args := m.Called(ctx, merchName)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.Merch), args.Error(1)
+}
+
+func (m *MockRepositoryImpl) UpdateBalance(ctx context.Context, userName string, amount int) error {
+	args := m.Called(ctx, userName, amount)
+	return args.Error(0)
 }

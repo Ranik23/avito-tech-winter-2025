@@ -8,6 +8,8 @@ import (
 	"log/slog"
 )
 
+
+// ПИСАТЬ ТЕСТЫ ТУТ - БЕСПОЛЕЗНО. ТУТ НЕ ЛОГИКИ - НАДО ПИСАТЬ ТЕСТЫ НА УРОВНЕ НИЖЕ - НА УРОВНЕ БД
 type merchServiceImpl struct {
 	storage repository.Repository
 	logger  *logger.Logger
@@ -27,6 +29,18 @@ func (m *merchServiceImpl) FetchBoughtMerch(ctx context.Context, purchaserName s
 }
 
 func (m *merchServiceImpl) Buy(ctx context.Context, purchaserName string, itemName string) error {
+
+	merch, err := m.storage.FindMerchByName(ctx, itemName)
+	if err != nil {
+		m.logger.Error("failed to get the merch item", slog.String("error", err.Error()))
+		return err
+	}
+
+	if err := m.storage.UpdateBalance(ctx, purchaserName, merch.Price); err != nil {
+		m.logger.Error("failed to update the balance", slog.String("error", err.Error()))
+		return err
+	}
+
 	if err := m.storage.CreatePurchase(ctx, purchaserName, itemName); err != nil {
 		m.logger.Error("failed to create the purchase", slog.String("error", err.Error()))
 		return err
