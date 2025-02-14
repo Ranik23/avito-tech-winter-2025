@@ -1,8 +1,9 @@
-package auth
+package auth_test
 
 import (
 	"avito/internal/logger"
 	repo_mock "avito/internal/repository/mock"
+	"avito/internal/service/auth"
 	token_mock "avito/internal/token/mock"
 	"context"
 	"testing"
@@ -16,7 +17,7 @@ func TestAuthenticate(t *testing.T) {
 	mockLogger := logger.NewLogger("debug")
 	mockToken := &token_mock.MockTokenImpl{}
 
-	authService := NewAuthService(mockRepo, mockLogger, mockToken)
+	authService := auth.NewAuthService(mockRepo, mockLogger, mockToken)
 
 	mockRepo.On("FindUserByName", mock.Anything, "testuser").Return(nil, nil) // говорим бд его не находить 
 	mockToken.On("GenerateJWT", "testuser").Return("mocked_token", nil) // говорим ей создать такой токен для нового юзера

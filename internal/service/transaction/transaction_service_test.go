@@ -1,9 +1,10 @@
-package transaction
+package transaction_test
 
 import (
 	"avito/internal/logger"
 	"avito/internal/models"
 	transaction_mock "avito/internal/repository/mock"
+	"avito/internal/service/transaction"
 	"context"
 	"testing"
 
@@ -15,7 +16,7 @@ func TestListSentTransactions(t *testing.T) {
 	mockRepository := &transaction_mock.MockRepositoryImpl{}
 	log := logger.NewLogger("debug")
 
-	transactionService := NewTransactionService(mockRepository, log)
+	transactionService := transaction.NewTransactionService(mockRepository, log)
 
 	mockSender := &models.User{
 		ID:             1,
@@ -75,7 +76,7 @@ func TestListReceivedTransactions(t *testing.T) {
 	mockRepository := &transaction_mock.MockRepositoryImpl{}
 	log := logger.NewLogger("debug")
 
-	transactionService := NewTransactionService(mockRepository, log)
+	transactionService := transaction.NewTransactionService(mockRepository, log)
 
 	mockReceiver := &models.User{
 		ID:             1,
