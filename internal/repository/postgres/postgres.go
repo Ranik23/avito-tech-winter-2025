@@ -6,7 +6,6 @@ import (
 	"avito/internal/router/handlers/responses"
 	"context"
 	"errors"
-
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -110,8 +109,7 @@ func (p *PostgresRepositoryImpl) CreateTransaction(ctx context.Context,
 	return tx.Commit().Error
 }
 
-func (p *PostgresRepositoryImpl) CreatePurchase(ctx context.Context,
-	purchaserName string, merchName string) error {
+func (p *PostgresRepositoryImpl) CreatePurchase(ctx context.Context, purchaserName string, merchName string) error {
 
 	tx := p.db.WithContext(ctx).Begin()
 	defer func() {
@@ -121,6 +119,7 @@ func (p *PostgresRepositoryImpl) CreatePurchase(ctx context.Context,
 	}()
 
 	var purchaser models.User
+
 	if err := tx.Where("username = ?", purchaserName).First(&purchaser).Error; err != nil {
 		tx.Rollback()
 		return err
@@ -137,7 +136,7 @@ func (p *PostgresRepositoryImpl) CreatePurchase(ctx context.Context,
 		return errors.New("insufficient funds for purchase")
 	}
 
-	if err := tx.Model(&purchaser).Update("balance", purchaser.Balance-merch.Price).Error; err != nil {
+	if err := tx.Model(&purchaser).Update("balance", purchaser.Balance - merch.Price).Error; err != nil {
 		tx.Rollback()
 		return err
 	}
@@ -174,13 +173,13 @@ func (p *PostgresRepositoryImpl) FindAppliedTransactions(ctx context.Context, se
 
 	if sentORreceived {
 		if err := p.db.WithContext(ctx).
-			Where("senderid = ?", user.ID).
+			Where("sender_id = ?", user.ID).
 			Find(&transactions).Error; err != nil {
 			return nil, err
 		}
 	} else {
 		if err := p.db.WithContext(ctx).
-			Where("receiverid = ?", user.ID).
+			Where("receiver_id = ?", user.ID).
 			Find(&transactions).Error; err != nil {
 			return nil, err
 		}
@@ -199,13 +198,12 @@ func (p *PostgresRepositoryImpl) FindBoughtMerch(ctx context.Context, userName s
 
 	if err = p.db.WithContext(ctx).
 		Table("purchases").
-		Select("merch.name AS merch_name, COUNT(*) AS count").
-		Joins("JOIN merch ON purchases.merch_id = merch.id").
+		Select("merches.name AS merch_name, COUNT(*) AS count").
+		Joins("JOIN merches ON purchases.merch_id = merches.id").
 		Where("purchases.user_id = ?", user.ID).
-		Group("merch.name").
+		Group("merches.name").
 		Scan(&results).Error; err != nil {
 		return nil, err
 	}
-
 	return results, nil
 }

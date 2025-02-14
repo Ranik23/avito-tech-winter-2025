@@ -15,7 +15,7 @@ func InfoHandler(manager *service.ServiceManager) gin.HandlerFunc {
 
 		tokenString := c.GetHeader("Authorization")
 
-		ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
 		user, err := manager.AuthService.VerifyToken(ctx, tokenString)
@@ -28,23 +28,23 @@ func InfoHandler(manager *service.ServiceManager) gin.HandlerFunc {
 
 		coins := user.Balance
 
-		transactionsSent, err := manager.TransactionService.GetSentTransactions(ctx, user.Username)
+		transactionsSent, err := manager.TransactionService.ListSentTransactions(ctx, user.Username)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, responses.ErrorResponse{
 				Errors: err.Error(),
 			})
-			return 
+			return
 		}
 
-		transactionsReceived, err := manager.TransactionService.GetReceivedTransactions(ctx, user.Username)
+		transactionsReceived, err := manager.TransactionService.ListReceivedTransactions(ctx, user.Username)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, responses.ErrorResponse{
 				Errors: err.Error(),
 			})
-			return 
+			return
 		}
 
-		merchList, err := manager.MerchService.GetBoughtMerch(ctx, user.Username)
+		merchList, err := manager.MerchService.FetchBoughtMerch(ctx, user.Username)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, responses.ErrorResponse{
 				Errors: err.Error(),
@@ -54,12 +54,12 @@ func InfoHandler(manager *service.ServiceManager) gin.HandlerFunc {
 
 		coinHistory := responses.CoinHistory{
 			Received: transactionsReceived,
-			Sent: transactionsSent,
+			Sent:     transactionsSent,
 		}
 
 		c.JSON(http.StatusOK, responses.InfoResponse{
-			Coins: coins,
-			Inventory: merchList,
+			Coins:       coins,
+			Inventory:   merchList,
 			CoinHistory: coinHistory,
 		})
 	}

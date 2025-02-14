@@ -16,9 +16,10 @@ type InfoResponse struct {
 }
 
 type InventoryItem struct {
-	Type     string 			 `json:"type"`
-	Quantity int    			 `json:"quantity"`
+	Type     string `json:"type" gorm:"column:merch_name"`
+	Quantity int    `json:"quantity" gorm:"column:count"`
 }
+
 
 type CoinHistory struct {
 	Received []Transaction 		 `json:"received"`

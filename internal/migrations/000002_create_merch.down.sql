@@ -1,1 +1,1 @@
-DROP TABLE merch;
+DROP TABLE merches;

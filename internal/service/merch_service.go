@@ -17,7 +17,7 @@ func NewMerchService(storage repository.Repository, logger *logger.Logger) *merc
 	return &merchServiceImpl{storage: storage, logger: logger}
 }
 
-func (m *merchServiceImpl) GetBoughtMerch(ctx context.Context, purchaserName string) ([]responses.InventoryItem, error) {
+func (m *merchServiceImpl) FetchBoughtMerch(ctx context.Context, purchaserName string) ([]responses.InventoryItem, error) {
 	merch, err := m.storage.FindBoughtMerch(ctx, purchaserName)
 	if err != nil {
 		m.logger.Error("failed to get the merch", slog.String("error", err.Error()))

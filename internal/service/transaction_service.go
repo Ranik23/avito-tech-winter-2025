@@ -17,7 +17,7 @@ func NewTransactionService(storage repository.Repository, logger *logger.Logger)
 	return &transactionServiceImpl{storage: storage, logger: logger}
 }
 
-func (t *transactionServiceImpl) GetSentTransactions(ctx context.Context, userName string) ([]responses.Transaction, error) {
+func (t *transactionServiceImpl) ListSentTransactions(ctx context.Context, userName string) ([]responses.Transaction, error) {
 	transactions, err := t.storage.FindAppliedTransactions(ctx, true, userName)
 	if err != nil {
 		t.logger.Error("failed to find transactions", slog.String("error", err.Error()))
@@ -35,7 +35,7 @@ func (t *transactionServiceImpl) GetSentTransactions(ctx context.Context, userNa
 	return finalTransactions, nil
 }
 
-func (t *transactionServiceImpl) GetReceivedTransactions(ctx context.Context, userName string) ([]responses.Transaction, error) {
+func (t *transactionServiceImpl) ListReceivedTransactions(ctx context.Context, userName string) ([]responses.Transaction, error) {
 	transactions, err := t.storage.FindAppliedTransactions(ctx, false, userName)
 	if err != nil {
 		t.logger.Error("failed to find transactions", slog.String("error", err.Error()))
