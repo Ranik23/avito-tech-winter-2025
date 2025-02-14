@@ -89,7 +89,6 @@ func (p *PostgresRepositoryImpl) CreateTransaction(ctx context.Context,
 
 
 func (p *PostgresRepositoryImpl) UpdateBalance(ctx context.Context, userName string, amount int) error {
-
 	tx := p.db.WithContext(ctx).Begin()
 	defer func() {
 		if r := recover(); r != nil {
@@ -109,7 +108,7 @@ func (p *PostgresRepositoryImpl) UpdateBalance(ctx context.Context, userName str
 		return errors.New("insufficient funds for purchase")
 	}
 
-	if err := tx.Where("userName = ?", userName).Update("balance", purchaser.Balance + amount).Error; err != nil {
+	if err := tx.Model(&models.User{}).Where("userName = ?", userName).Update("balance", purchaser.Balance + amount).Error; err != nil {
 		tx.Rollback()
 		return err
 	}

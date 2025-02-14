@@ -36,7 +36,7 @@ func (m *merchServiceImpl) Buy(ctx context.Context, purchaserName string, itemNa
 		return err
 	}
 
-	if err := m.storage.UpdateBalance(ctx, purchaserName, merch.Price); err != nil {
+	if err := m.storage.UpdateBalance(ctx, purchaserName, -merch.Price); err != nil {
 		m.logger.Error("failed to update the balance", slog.String("error", err.Error()))
 		return err
 	}
