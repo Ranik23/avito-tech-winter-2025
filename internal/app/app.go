@@ -30,7 +30,7 @@ func NewApp(configPath string) (*App, error) {
 		return nil, err
 	}
 
-	logger := logger.SetUpLogger(cfg.LogConfig.Level)
+	logger := logger.NewLogger(cfg.LogConfig.Level)
 
 	dsn := config.CreatePostgresDSN(cfg)
 

@@ -5,6 +5,7 @@ import (
 	"avito/internal/logger"
 	"avito/internal/models"
 	"avito/internal/repository"
+	"avito/internal/token"
 	"context"
 	"errors"
 	"log/slog"
@@ -24,17 +25,7 @@ func NewAuthService(storage repository.Repository, logger *logger.Logger) *authS
 	return &authService{storage: storage, logger: logger}
 }
 
-var jwtSecret = []byte("your_secret_key")
 
-func generateJWT(userName string) (string, error) {
-	claims := jwt.MapClaims{
-		"user_name": userName,
-		"exp":       time.Now().Add(time.Hour * 24).Unix(),
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(jwtSecret)
-}
 
 func (a *authService) Authenticate(ctx context.Context, userName string, password string) (string, error) {
 	user, err := a.storage.FindUserByName(ctx, userName)
@@ -50,7 +41,7 @@ func (a *authService) Authenticate(ctx context.Context, userName string, passwor
 			return "", err
 		}
 
-		token, err := generateJWT(userName)
+		token, err := tokenutil.GenerateJWT(userName)
 		if err != nil {
 			a.logger.Error("failed to generate token", slog.String("error", err.Error()))
 			return "", err
@@ -73,18 +64,18 @@ func (a *authService) Authenticate(ctx context.Context, userName string, passwor
 }
 
 func (a *authService) VerifyToken(ctx context.Context, tokenString string) (*models.User, error) {
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+	tkn, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, apperror.ErrInvalidToken
 		}
-		return jwtSecret, nil
+		return tokenutil.JWTSecret, nil
 	})
 	if err != nil {
 		a.logger.Error("invalid token", slog.String("error", err.Error()))
 		return nil, apperror.ErrInvalidToken
 	}
 
-	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+	if claims, ok := tkn.Claims.(jwt.MapClaims); ok && tkn.Valid {
 		userName, ok := claims["user_name"].(string)
 		if !ok {
 			return nil, apperror.ErrInvalidToken

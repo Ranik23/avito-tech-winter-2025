@@ -4,7 +4,6 @@ import (
 	"context"
 	"log/slog"
 	"os"
-
 	"github.com/lmittmann/tint"
 )
 
@@ -13,15 +12,7 @@ type Logger struct {
 }
 
 
-func NewLogger(level slog.Level) *Logger {
-	return &Logger{
-		Logger : *slog.New(tint.NewHandler(os.Stdout, &tint.Options{
-			Level: level,
-		}))}
-}
-
-
-func SetUpLogger(level string) *Logger {
+func NewLogger(level string) *Logger {
 	var lvl slog.Level
 	switch level {
 	case "info":
@@ -32,8 +23,15 @@ func SetUpLogger(level string) *Logger {
 		lvl = slog.LevelError
 	case "debug":
 		lvl = slog.LevelDebug
+	default:
+		lvl = slog.LevelInfo
 	}
-	return NewLogger(lvl)
+
+	return &Logger{
+		Logger: *slog.New(tint.NewHandler(os.Stdout, &tint.Options{
+			Level: lvl,
+		})),
+	}
 }
 
 func (l *Logger) InfoWithAttrs(ctx context.Context, level slog.Level, message string, attrs ...slog.Attr) {

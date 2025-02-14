@@ -27,19 +27,7 @@ func NewRepositoryImpl(dsn string, logger *logger.Logger) (*PostgresRepositoryIm
 	}, nil
 }
 
-func (p *PostgresRepositoryImpl) CreateUser(ctx context.Context,
-	userName string,
-	hashedPassword []byte,
-	tokenString string) error {
-
-	tx := p.db.WithContext(ctx).Begin()
-
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-		}
-	}()
-
+func (p *PostgresRepositoryImpl) CreateUser(ctx context.Context, userName string, hashedPassword []byte, tokenString string) error {
 	user := &models.User{
 		Username:       userName,
 		HashedPassword: hashedPassword,
@@ -47,13 +35,13 @@ func (p *PostgresRepositoryImpl) CreateUser(ctx context.Context,
 		Balance:        1000,
 	}
 
-	if err := tx.Create(user).Error; err != nil {
-		tx.Rollback()
+	if err := p.db.WithContext(ctx).Create(user).Error; err != nil {
 		return err
 	}
 
-	return tx.Commit().Error
+	return nil
 }
+
 
 func (p *PostgresRepositoryImpl) CreateTransaction(ctx context.Context,
 	senderName string,
@@ -163,47 +151,63 @@ func (p *PostgresRepositoryImpl) FindUserByName(ctx context.Context, userName st
 	return &user, nil
 }
 
+
 func (p *PostgresRepositoryImpl) FindAppliedTransactions(ctx context.Context, sentORreceived bool, userName string) ([]models.Transaction, error) {
+	tx := p.db.WithContext(ctx).Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
 	var transactions []models.Transaction
 
 	user, err := p.FindUserByName(ctx, userName)
 	if err != nil {
+		tx.Rollback()
 		return nil, err
 	}
 
 	if sentORreceived {
-		if err := p.db.WithContext(ctx).
-			Where("sender_id = ?", user.ID).
-			Find(&transactions).Error; err != nil {
+		if err := tx.Where("sender_id = ?", user.ID).Find(&transactions).Error; err != nil {
+			tx.Rollback()
 			return nil, err
 		}
 	} else {
-		if err := p.db.WithContext(ctx).
-			Where("receiver_id = ?", user.ID).
-			Find(&transactions).Error; err != nil {
+		if err := tx.Where("receiver_id = ?", user.ID).Find(&transactions).Error; err != nil {
+			tx.Rollback()
 			return nil, err
 		}
 	}
 
-	return transactions, nil
+	return transactions, tx.Commit().Error
 }
 
 func (p *PostgresRepositoryImpl) FindBoughtMerch(ctx context.Context, userName string) ([]responses.InventoryItem, error) {
+	tx := p.db.WithContext(ctx).Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
 	var results []responses.InventoryItem
 
 	user, err := p.FindUserByName(ctx, userName)
 	if err != nil {
+		tx.Rollback()
 		return nil, err
 	}
 
-	if err = p.db.WithContext(ctx).
-		Table("purchases").
+	if err = tx.Table("purchases").
 		Select("merches.name AS merch_name, COUNT(*) AS count").
 		Joins("JOIN merches ON purchases.merch_id = merches.id").
 		Where("purchases.user_id = ?", user.ID).
 		Group("merches.name").
 		Scan(&results).Error; err != nil {
+		tx.Rollback()
 		return nil, err
 	}
-	return results, nil
+
+	return results, tx.Commit().Error
 }
