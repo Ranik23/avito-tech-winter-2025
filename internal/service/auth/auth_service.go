@@ -9,6 +9,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt"
@@ -69,7 +70,8 @@ func (a *authService) Authenticate(ctx context.Context, userName string, passwor
 }
 
 func (a *authService) VerifyToken(ctx context.Context, tokenString string) (*models.User, error) {
-	tkn, err := a.token.ParseJWT(tokenString)
+	tokenStrinWithoutBearer := strings.TrimPrefix(tokenString, "Bearer ")
+	tkn, err := a.token.ParseJWT(tokenStrinWithoutBearer)
 	if err != nil {
 		a.logger.Error("invalid token", slog.String("error", err.Error()))
 		return nil, apperror.ErrInvalidToken
