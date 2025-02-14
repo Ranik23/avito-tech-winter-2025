@@ -1,4 +1,4 @@
-package service
+package merch
 
 import (
 	"avito/internal/logger"

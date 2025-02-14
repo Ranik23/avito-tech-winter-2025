@@ -1,4 +1,4 @@
-package service
+package auth
 
 import (
 	"avito/internal/apperror"
@@ -17,12 +17,17 @@ import (
 )
 
 type authService struct {
+	token tokenutil.Token
 	storage repository.Repository
 	logger  *logger.Logger
 }
 
-func NewAuthService(storage repository.Repository, logger *logger.Logger) *authService {
-	return &authService{storage: storage, logger: logger}
+func NewAuthService(storage repository.Repository,
+					logger *logger.Logger,
+					token tokenutil.Token) *authService {
+	return &authService{storage: storage,
+						logger: logger,
+						token: token,}
 }
 
 
@@ -41,7 +46,7 @@ func (a *authService) Authenticate(ctx context.Context, userName string, passwor
 			return "", err
 		}
 
-		token, err := tokenutil.GenerateJWT(userName)
+		token, err := a.token.GenerateJWT(userName)
 		if err != nil {
 			a.logger.Error("failed to generate token", slog.String("error", err.Error()))
 			return "", err
@@ -64,12 +69,7 @@ func (a *authService) Authenticate(ctx context.Context, userName string, passwor
 }
 
 func (a *authService) VerifyToken(ctx context.Context, tokenString string) (*models.User, error) {
-	tkn, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, apperror.ErrInvalidToken
-		}
-		return tokenutil.JWTSecret, nil
-	})
+	tkn, err := a.token.ParseJWT(tokenString)
 	if err != nil {
 		a.logger.Error("invalid token", slog.String("error", err.Error()))
 		return nil, apperror.ErrInvalidToken

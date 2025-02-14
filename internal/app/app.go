@@ -4,8 +4,9 @@ import (
 	"avito/config"
 	"avito/internal/logger"
 	"avito/internal/repository/postgres"
-	"avito/internal/service"
 	"avito/internal/router/handlers"
+	"avito/internal/service"
+	tokenutil "avito/internal/token"
 	"context"
 	"log/slog"
 	"net/http"
@@ -13,6 +14,7 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -40,7 +42,9 @@ func NewApp(configPath string) (*App, error) {
 		return nil, err
 	}
 
-	serviceManager := service.NewServiceManager(storage, logger)
+	token := tokenutil.NewJWTService("secret")
+
+	serviceManager := service.NewServiceManager(storage, logger, token)
 
 	router := gin.Default()
 	

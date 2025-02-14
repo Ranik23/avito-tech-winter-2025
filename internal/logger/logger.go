@@ -1,7 +1,6 @@
 package logger
 
 import (
-	"context"
 	"log/slog"
 	"os"
 	"github.com/lmittmann/tint"
@@ -32,8 +31,4 @@ func NewLogger(level string) *Logger {
 			Level: lvl,
 		})),
 	}
-}
-
-func (l *Logger) InfoWithAttrs(ctx context.Context, level slog.Level, message string, attrs ...slog.Attr) {
-	l.Logger.LogAttrs(ctx, level, message, attrs...)
 }

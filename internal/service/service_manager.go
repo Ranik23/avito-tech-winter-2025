@@ -3,6 +3,10 @@ package service
 import (
 	"avito/internal/logger"
 	"avito/internal/repository"
+	"avito/internal/service/auth"
+	"avito/internal/service/merch"
+	"avito/internal/service/transaction"
+	tokenutil "avito/internal/token"
 )
 
 type ServiceManager struct {
@@ -11,10 +15,12 @@ type ServiceManager struct {
 	AuthService        AuthService
 }
 
-func NewServiceManager(storage repository.Repository, logger *logger.Logger) *ServiceManager {
+func NewServiceManager(storage repository.Repository,
+					   logger *logger.Logger,
+					   token  tokenutil.Token) *ServiceManager {
 	return &ServiceManager{
-		TransactionService: NewTransactionService(storage, logger),
-		MerchService:       NewMerchService(storage, logger),
-		AuthService:        NewAuthService(storage, logger),
+		TransactionService: transaction.NewTransactionService(storage, logger),
+		MerchService:       merch.NewMerchService(storage, logger),
+		AuthService:        auth.NewAuthService(storage, logger, token),
 	}
 }
