@@ -2,7 +2,7 @@ package service
 
 import (
 	"avito/internal/logger"
-	"avito/internal/repository/db"
+	"avito/internal/repository"
 )
 
 type ServiceManager struct {
@@ -11,7 +11,7 @@ type ServiceManager struct {
 	AuthService        AuthService
 }
 
-func NewServiceManager(storage db.Repository, logger *logger.Logger) *ServiceManager {
+func NewServiceManager(storage repository.Repository, logger *logger.Logger) *ServiceManager {
 	return &ServiceManager{
 		TransactionService: NewTransactionService(storage, logger),
 		MerchService:       NewMerchService(storage, logger),

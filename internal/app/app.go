@@ -3,7 +3,7 @@ package app
 import (
 	"avito/config"
 	"avito/internal/logger"
-	"avito/internal/repository/db/postgres"
+	"avito/internal/repository/postgres"
 	"avito/internal/service"
 	"avito/internal/router/handlers"
 	"context"
@@ -56,7 +56,6 @@ func NewApp(configPath string) (*App, error) {
 		Addr:    cfg.HTTPServerConfig.Host + ":" + cfg.HTTPServerConfig.Port,
 		Handler: router,
 	}
-
 
 	logger.Info("Application initialized successfully")
 

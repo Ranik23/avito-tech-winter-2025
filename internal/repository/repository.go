@@ -1,4 +1,4 @@
-package db
+package repository
 
 import (
 	"avito/internal/models"

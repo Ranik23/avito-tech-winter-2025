@@ -2,18 +2,18 @@ package service
 
 import (
 	"avito/internal/logger"
-	"avito/internal/repository/db"
+	"avito/internal/repository"
 	"avito/internal/router/handlers/responses"
 	"context"
 	"log/slog"
 )
 
 type transactionServiceImpl struct {
-	storage db.Repository
+	storage repository.Repository
 	logger  *logger.Logger
 }
 
-func NewTransactionService(storage db.Repository, logger *logger.Logger) *transactionServiceImpl {
+func NewTransactionService(storage repository.Repository, logger *logger.Logger) *transactionServiceImpl {
 	return &transactionServiceImpl{storage: storage, logger: logger}
 }
 

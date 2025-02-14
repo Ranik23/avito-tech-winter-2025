@@ -4,7 +4,7 @@ import (
 	"avito/internal/apperror"
 	"avito/internal/logger"
 	"avito/internal/models"
-	"avito/internal/repository/db"
+	"avito/internal/repository"
 	"context"
 	"errors"
 	"log/slog"
@@ -16,11 +16,11 @@ import (
 )
 
 type authService struct {
-	storage db.Repository
+	storage repository.Repository
 	logger  *logger.Logger
 }
 
-func NewAuthService(storage db.Repository, logger *logger.Logger) *authService {
+func NewAuthService(storage repository.Repository, logger *logger.Logger) *authService {
 	return &authService{storage: storage, logger: logger}
 }
 

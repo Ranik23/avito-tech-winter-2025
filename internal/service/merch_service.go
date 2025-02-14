@@ -2,18 +2,18 @@ package service
 
 import (
 	"avito/internal/logger"
-	"avito/internal/repository/db"
+	"avito/internal/repository"
 	"avito/internal/router/handlers/responses"
 	"context"
 	"log/slog"
 )
 
 type merchServiceImpl struct {
-	storage db.Repository
+	storage repository.Repository
 	logger  *logger.Logger
 }
 
-func NewMerchService(storage db.Repository, logger *logger.Logger) *merchServiceImpl {
+func NewMerchService(storage repository.Repository, logger *logger.Logger) *merchServiceImpl {
 	return &merchServiceImpl{storage: storage, logger: logger}
 }
 
