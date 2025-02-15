@@ -17,7 +17,3 @@ type Repository interface {
 	FindMerchByName(ctx context.Context, merchName string)											(*models.Merch, error)
 	UpdateBalance(ctx context.Context, userName string, amount int) 								error							
 }
-
-
-// UpdateBalance(ctx context.Context, userName string, amount int) error
-// 

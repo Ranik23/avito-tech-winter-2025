@@ -25,9 +25,9 @@ type App struct {
 	cfg				*config.Config
 }
 
-func NewApp(configPath string) (*App, error) {
+func NewApp() (*App, error) {
 
-	cfg, err := config.LoadConfig(configPath)
+	cfg, err := config.LoadConfig()
 	if err != nil {
 		return nil, err
 	}

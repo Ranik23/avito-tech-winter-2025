@@ -1,0 +1,25 @@
+# Этап сборки
+FROM golang:1.23-alpine AS builder
+
+WORKDIR /app
+
+COPY go.mod go.sum ./
+RUN go mod tidy
+
+COPY . .
+
+RUN go build -o /app/migratorBIN ./cmd/migrator/main.go
+
+# Финальный образ
+FROM alpine:latest
+
+WORKDIR /migrations
+
+RUN apk add --no-cache postgresql-client curl
+
+COPY --from=builder /app/migratorBIN ./migratorBIN
+COPY --from=builder /app/internal/migrations ./
+
+RUN chmod +x ./migratorBIN
+
+ENTRYPOINT ["./migratorBIN", "--path", "./"]

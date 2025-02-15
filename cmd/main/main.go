@@ -9,7 +9,7 @@ import (
 
 func main() {
 	
-	app, err := app.NewApp("config.yaml")
+	app, err := app.NewApp()
 	if err != nil {
 		panic(err)
 	}
